@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Howlstagram</string>
+    <string name="app_name">Instagram</string>
     <string name="facebook_app_id"></string>
     <string name="fb_login_protocol_scheme"></string>
     <string name="com.twitter.sdk.android.CONSUMER_KEY"></string>
@@ -9,9 +9,9 @@
     <string name="email">Email</string>
     <string name="password">Password</string>
     <string name="signin_email">회원가입 및 이메일 로그인</string>
-    <string name="signin_google">Google으로 로그인</string>
+    <string name="signin_google">Google로 로그인</string>
     <string name="signin_facebook">Facebook으로 로그인</string>
-    <string name="signin_twitter">Twitter으로 로그인</string>
+    <string name="signin_twitter">Twitter로 로그인</string>
     <string name="signup_complete">회원가입 성공</string>
     <string name="signin_complete">로그인 성공</string>
     <string name="signout">로그아웃</string>
