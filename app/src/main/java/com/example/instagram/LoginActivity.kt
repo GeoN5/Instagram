@@ -52,26 +52,25 @@ class LoginActivity : AppCompatActivity() {
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken("553186965299-5c53fidh1pvani35ct5hd2avabt49rcu.apps.googleusercontent.com").requestEmail().build()
         googleSigninClient = GoogleSignIn.getClient(this,gso)
-        printHashKey()
+        //printHashKey()
         callbackManager = CallbackManager.Factory.create()
     }
 
-    private fun printHashKey() { //facebook key hash
-        try {
-            val info = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNATURES)
-            for (signature in info.signatures) {
-                val md = MessageDigest.getInstance("SHA")
-                md.update(signature.toByteArray())
-                val hashKey = String(Base64.encode(md.digest(), 0))
-                Log.d("asdf", "printHashKey() Hash Key: $hashKey")
-            }
-        } catch (e: NoSuchAlgorithmException) {
-            Log.d("asdf", "printHashKey()", e)
-        } catch (e: Exception) {
-            Log.d("asdf", "printHashKey()", e)
-        }
-
-    }
+//    private fun printHashKey() { //facebook key hash
+//        try {
+//            val info = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNATURES)
+//            for (signature in info.signatures) {
+//                val md = MessageDigest.getInstance("SHA")
+//                md.update(signature.toByteArray())
+//                val hashKey = String(Base64.encode(md.digest(), 0))
+//                Log.d("asdf", "printHashKey() Hash Key: $hashKey")
+//            }
+//        } catch (e: NoSuchAlgorithmException) {
+//            Log.d("asdf", "printHashKey()", e)
+//        } catch (e: Exception) {
+//            Log.d("asdf", "printHashKey()", e)
+//        }
+//    }
 
     private fun createAndLoginEmail() { //Authentication
         if (email_edittext.text.trim().toString().isNotEmpty() && password_edittext.text.trim().toString().isNotEmpty()) {
@@ -80,7 +79,7 @@ class LoginActivity : AppCompatActivity() {
                     when {
                         //계정이 없을경우(회원가입)
                         task.isSuccessful -> {
-                            Toast.makeText(this, "아이디 생성이 완료되었습니다.", Toast.LENGTH_LONG).show()
+                            Toast.makeText(this, "회원가입 및 로그인 성공.", Toast.LENGTH_LONG).show()
                             moveMainPage(auth?.currentUser)
                         }
                         //계정이 있고 에러가 난 경우
@@ -90,7 +89,7 @@ class LoginActivity : AppCompatActivity() {
                     }
                 }
         } else {
-            Toast.makeText(this,"Please enter your email and password",Toast.LENGTH_LONG).show()
+            Toast.makeText(this,"이메일과 비밀번호를 입력해주세요.",Toast.LENGTH_LONG).show()
         }
     }
 
@@ -122,7 +121,12 @@ class LoginActivity : AppCompatActivity() {
     private fun firebaseAuthWithGoogle(account: GoogleSignInAccount){
         //idToken으로 인증서를 받고 인증서를 통한 로그인
         val credential = GoogleAuthProvider.getCredential(account.idToken,null)
-        auth?.signInWithCredential(credential)
+        auth?.signInWithCredential(credential)?.addOnCompleteListener { task: Task<AuthResult> ->
+            if(task.isSuccessful){
+                Toast.makeText(this,"로그인이 성공했습니다.",Toast.LENGTH_LONG).show()
+                moveMainPage(auth?.currentUser)
+            }
+        }
     }
 
     private fun facebookLogin(){
@@ -137,7 +141,7 @@ class LoginActivity : AppCompatActivity() {
             }
 
             override fun onError(error: FacebookException?) {
-
+                Toast.makeText(this@LoginActivity, error?.message!!.toString(),Toast.LENGTH_LONG).show()
             }
 
         })
@@ -145,7 +149,12 @@ class LoginActivity : AppCompatActivity() {
 
     private fun handleFacebookAccessToken(token: AccessToken){
         val credential = FacebookAuthProvider.getCredential(token.token)
-        auth?.signInWithCredential(credential)
+        auth?.signInWithCredential(credential)?.addOnCompleteListener { task: Task<AuthResult> ->
+            if(task.isSuccessful){
+                Toast.makeText(this,"로그인이 성공했습니다.",Toast.LENGTH_LONG).show()
+                moveMainPage(auth?.currentUser)
+            }
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
