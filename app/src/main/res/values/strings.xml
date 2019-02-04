@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Instagram</string>
-    <string name="facebook_app_id"></string>
-    <string name="fb_login_protocol_scheme"></string>
+    <string name="facebook_app_id">790541794615865</string>
+    <string name="fb_login_protocol_scheme">fb790541794615865</string>
     <string name="com.twitter.sdk.android.CONSUMER_KEY"></string>
     <string name="com.twitter.sdk.android.CONSUMER_SECRET"></string>
 
