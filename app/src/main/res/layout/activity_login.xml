@@ -8,7 +8,7 @@
     tools:context=".LoginActivity">
 
     <ImageView
-            android:src="@drawable/logo_login_instagram"
+            android:src="@drawable/logo_instagram"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"

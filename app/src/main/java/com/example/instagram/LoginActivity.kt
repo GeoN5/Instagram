@@ -157,6 +157,12 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() { //auto login
+        super.onResume()
+        Toast.makeText(this,"로그인이 성공했습니다.",Toast.LENGTH_LONG).show()
+        moveMainPage(auth?.currentUser)
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         callbackManager?.onActivityResult(requestCode,resultCode,data)
