@@ -1,4 +1,4 @@
-package com.example.instagram
+package com.example.instagram.activity
 
 import android.app.Activity
 import android.content.Intent
@@ -12,9 +12,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.tasks.Task
 import kotlinx.android.synthetic.main.activity_login.*
-import android.content.pm.PackageManager
-import android.util.Base64
-import android.util.Log
+import com.example.instagram.R
 import com.facebook.AccessToken
 import com.facebook.CallbackManager
 import com.facebook.FacebookCallback
@@ -22,8 +20,6 @@ import com.facebook.FacebookException
 import com.facebook.login.LoginManager
 import com.facebook.login.LoginResult
 import com.google.firebase.auth.*
-import java.security.MessageDigest
-import java.security.NoSuchAlgorithmException
 import java.util.*
 
 
@@ -37,6 +33,7 @@ class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
+        password_input_layout.isPasswordVisibilityToggleEnabled = true
 
         auth = FirebaseAuth.getInstance()
         email_login_button.setOnClickListener {
@@ -79,8 +76,7 @@ class LoginActivity : AppCompatActivity() {
                     when {
                         //계정이 없을경우(회원가입)
                         task.isSuccessful -> {
-                            Toast.makeText(this, "회원가입 및 로그인 성공.", Toast.LENGTH_LONG).show()
-                            moveMainPage(auth?.currentUser)
+                            moveMainPage(auth?.currentUser,"회원가입 및 로그인 성공.")
                         }
                         //계정이 있고 에러가 난 경우
                         task.exception?.message.isNullOrEmpty() -> Toast.makeText(this, task.exception!!.message, Toast.LENGTH_LONG).show()
@@ -98,7 +94,6 @@ class LoginActivity : AppCompatActivity() {
             ?.addOnCompleteListener { task: Task<AuthResult> ->
                 when {
                     task.isSuccessful -> {
-                        Toast.makeText(this,"로그인이 성공했습니다.",Toast.LENGTH_LONG).show()
                         moveMainPage(auth?.currentUser)
                     }
                     else -> Toast.makeText(this, task.exception!!.message,Toast.LENGTH_LONG).show()
@@ -106,10 +101,17 @@ class LoginActivity : AppCompatActivity() {
             }
     }
 
-    private fun moveMainPage(user : FirebaseUser?){
+    private fun moveMainPage(user : FirebaseUser?,message:String =""){
         if(user != null){
-            startActivity(Intent(this,MainActivity::class.java))
-            finish()
+            if(message.isEmpty()){
+                Toast.makeText(this,"로그인에 성공했습니다.",Toast.LENGTH_SHORT).show()
+                startActivity(Intent(this, MainActivity::class.java))
+                finish()
+            }else{
+                Toast.makeText(this, message,Toast.LENGTH_SHORT).show()
+                startActivity(Intent(this, MainActivity::class.java))
+                finish()
+            }
         }
     }
 
@@ -123,7 +125,6 @@ class LoginActivity : AppCompatActivity() {
         val credential = GoogleAuthProvider.getCredential(account.idToken,null)
         auth?.signInWithCredential(credential)?.addOnCompleteListener { task: Task<AuthResult> ->
             if(task.isSuccessful){
-                Toast.makeText(this,"로그인이 성공했습니다.",Toast.LENGTH_LONG).show()
                 moveMainPage(auth?.currentUser)
             }
         }
@@ -135,15 +136,12 @@ class LoginActivity : AppCompatActivity() {
             override fun onSuccess(result: LoginResult?) {
                 handleFacebookAccessToken(result?.accessToken!!)
             }
-
             override fun onCancel() {
 
             }
-
             override fun onError(error: FacebookException?) {
                 Toast.makeText(this@LoginActivity, error?.message!!.toString(),Toast.LENGTH_LONG).show()
             }
-
         })
     }
 
@@ -151,7 +149,6 @@ class LoginActivity : AppCompatActivity() {
         val credential = FacebookAuthProvider.getCredential(token.token)
         auth?.signInWithCredential(credential)?.addOnCompleteListener { task: Task<AuthResult> ->
             if(task.isSuccessful){
-                Toast.makeText(this,"로그인이 성공했습니다.",Toast.LENGTH_LONG).show()
                 moveMainPage(auth?.currentUser)
             }
         }
@@ -159,7 +156,6 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onResume() { //auto login
         super.onResume()
-        Toast.makeText(this,"로그인이 성공했습니다.",Toast.LENGTH_LONG).show()
         moveMainPage(auth?.currentUser)
     }
 
