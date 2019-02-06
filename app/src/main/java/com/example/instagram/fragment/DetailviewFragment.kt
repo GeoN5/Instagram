@@ -73,6 +73,15 @@ class DetailviewFragment : Fragment(){
             }else{ //클릭되있지 않은 경우
                 viewHolder.detailviewitem_favorite_imageview.setImageResource(R.drawable.ic_favorite_border)
             }
+
+            viewHolder.detailviewitem_profile_image.setOnClickListener {//프래그먼트간의 전환
+                val fragment = UserFragment()
+                val bundle = Bundle()
+                bundle.putString("destinationUid",contentDTOs[position].uid)
+                fragment.arguments = bundle
+                activity!!.supportFragmentManager.beginTransaction().replace(R.id.main_content,fragment).commit()
+            }
+
         }
 
         private fun favoriteEvent(position: Int){
@@ -87,6 +96,7 @@ class DetailviewFragment : Fragment(){
                     contentDTO.favoriteCount += 1
                 }
                 transaction.set(tsDoc,contentDTO)
+                return@runTransaction
             }
         }
 
