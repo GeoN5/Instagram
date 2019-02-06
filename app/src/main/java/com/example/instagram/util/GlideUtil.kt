@@ -11,6 +11,10 @@ fun ImageView.loadImage(url : Uri, context: Context){
     Glide.with(context).load(url).apply(RequestOptions().centerCrop()).into(this)
 }
 
+fun ImageView.loadImage(url : String,context: Context){
+    Glide.with(context).load(url).apply(RequestOptions().centerCrop()).into(this)
+}
+
 //fun ImageView.loadImage(url : Uri, context: Context){ //캐시 삭제후 로딩
 //    Glide.with(context).load(url).apply(RequestOptions().centerCrop().skipMemoryCache(true)
 //        .diskCacheStrategy(DiskCacheStrategy.NONE)).into(this)
