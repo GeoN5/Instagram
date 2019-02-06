@@ -12,6 +12,7 @@ import com.example.instagram.model.ContentDTO
 import com.example.instagram.util.loadImage
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Transaction
 import kotlinx.android.synthetic.main.fragment_detail.view.*
 import kotlinx.android.synthetic.main.item_detail.view.*
 
@@ -60,11 +61,32 @@ class DetailviewFragment : Fragment(){
             val viewHolder = holder.itemView
 
             viewHolder.detailviewitem_profile_textview.text = contentDTOs[position].userId //유저 아이디
-            //이미지
+            viewHolder.detailviewitem_imageview_content.loadImage(contentDTOs[position].imageUri!!,context!!) //이미지
             viewHolder.detailviewitem_explain_textview.text = contentDTOs[position].explain //설명 텍스트
             viewHolder.detailviewitem_favoritecounter_textview.text = "좋아요 ${contentDTOs[position].favoriteCount}개" //좋아요 카운터
-            viewHolder.detailviewitem_imageview_content.loadImage(contentDTOs[position].imageUri!!,context!!)
+            viewHolder.detailviewitem_favorite_imageview.setOnClickListener {
+                favoriteEvent(position)
+            }
+            if(contentDTOs[position].favorites.containsKey(uid)){ //좋아요 클릭되있는 경우
+                viewHolder.detailviewitem_favorite_imageview.setImageResource(R.drawable.ic_favorite)
+            }else{ //클릭되있지 않은 경우
+                viewHolder.detailviewitem_favorite_imageview.setImageResource(R.drawable.ic_favorite_border)
+            }
+        }
 
+        private fun favoriteEvent(position: Int){
+            val tsDoc = firesotre?.collection("images")?.document(contentUidList[position])
+            firesotre?.runTransaction { transaction: Transaction -> //다른 사용자가 도큐먼트를 점유할 수 없음
+                val contentDTO = transaction.get(tsDoc!!).toObject(ContentDTO::class.java)
+                if(contentDTO?.favorites?.containsKey(uid)!!){ //좋아요를 누른상태
+                    contentDTO.favorites.remove(uid)
+                    contentDTO.favoriteCount -= 1
+                }else{ //좋아요를 누르지 않은 상태
+                    contentDTO.favorites[uid!!] = true
+                    contentDTO.favoriteCount += 1
+                }
+                transaction.set(tsDoc,contentDTO)
+            }
         }
 
     }
