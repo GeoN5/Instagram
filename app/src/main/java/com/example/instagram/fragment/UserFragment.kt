@@ -74,6 +74,8 @@ class UserFragment : Fragment(){
         fragmentView.account_recyclerview.adapter = UserFragmentRecyclerviewAdapter()
         fragmentView.account_recyclerview.layoutManager = GridLayoutManager(context!!,3)
         getProfileImages()
+        getFollower()
+        getFollowing()
         return fragmentView
     }
 
@@ -130,6 +132,24 @@ class UserFragment : Fragment(){
                 }
 
         }
+    }
+
+    private fun getFollower(){
+        firestore.collection("users").document(uid)
+            .addSnapshotListener { documentSnapshot, firebaseFirestoreException ->
+                if(documentSnapshot == null)return@addSnapshotListener
+                val followDTO = documentSnapshot.toObject(FollowDTO::class.java)
+                fragmentView.account_tv_follower_count.text = followDTO?.followerCount.toString()
+            }
+    }
+
+    private fun getFollowing(){
+        firestore.collection("users").document(uid)
+            .addSnapshotListener { documentSnapshot, firebaseFirestoreException ->
+                if(documentSnapshot == null)return@addSnapshotListener
+                val followDTO = documentSnapshot.toObject(FollowDTO::class.java)
+                fragmentView.account_tv_following_count.text = followDTO?.followingCount.toString()
+            }
     }
 
     inner class UserFragmentRecyclerviewAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>(){
