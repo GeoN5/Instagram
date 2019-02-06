@@ -5,12 +5,12 @@
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".fragment.DetailviewFragment"
-        tools:showIn="@layout/activity_main">
+        tools:context=".fragment.DetailviewFragment">
 
     <android.support.v7.widget.RecyclerView
             android:id="@+id/detailviewfragment_recyclerview"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
+            android:layout_height="match_parent"
+            tools:listitem="@layout/item_detail"/>
 
 </LinearLayout>

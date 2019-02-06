@@ -12,6 +12,7 @@ import com.example.instagram.model.ContentDTO
 import com.example.instagram.util.loadImage
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.Transaction
 import kotlinx.android.synthetic.main.fragment_detail.view.*
 import kotlinx.android.synthetic.main.item_detail.view.*
@@ -36,7 +37,7 @@ class DetailviewFragment : Fragment(){
         var uid = FirebaseAuth.getInstance().currentUser?.uid //현재 로그인된 유저의 uid
 
         init {
-            firesotre?.collection("images")?.orderBy("timestamp")?.
+            firesotre?.collection("images")?.orderBy("timestamp", Query.Direction.DESCENDING)?.//내림차순 정렬
                 addSnapshotListener { querySnapshot, firebaseFirestoreException ->
                     contentDTOs.clear()
                     contentUidList.clear()
@@ -49,8 +50,8 @@ class DetailviewFragment : Fragment(){
                 }
         }
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_detail,parent,false)
-            return CustomViewHolder(view)
+            val view = LayoutInflater.from(context).inflate(R.layout.item_detail,parent,false)
+            return DetailViewHolder(view)
         }
 
         override fun getItemCount(): Int {
@@ -91,9 +92,9 @@ class DetailviewFragment : Fragment(){
 
     }
 
-    class CustomViewHolder(view: View) : RecyclerView.ViewHolder(view)
-
 }
+
+class DetailViewHolder(view: View) : RecyclerView.ViewHolder(view)
 
 
 
