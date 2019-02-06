@@ -35,8 +35,9 @@ class GridFragment : Fragment(){
         init {
             FirebaseFirestore.getInstance().collection("images").orderBy("timestamp",Query.Direction.DESCENDING)//내림차순 정렬
                 .addSnapshotListener { querySnapshot, firebaseFirestoreException ->
+                    if(querySnapshot == null)return@addSnapshotListener
                     contentDTOs.clear()
-                    for(snapshot in querySnapshot!!.documents){
+                    for(snapshot in querySnapshot.documents){
                         val item = snapshot.toObject(ContentDTO::class.java)
                         contentDTOs.add(item!!)
                     }

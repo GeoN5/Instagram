@@ -18,6 +18,7 @@
                 android:layout_height="100dp"/>
         <Button
                 android:id="@+id/account_btn_follow_signout"
+                android:theme="@style/ButtonStyle"
                 android:text="@string/follow"
                 android:layout_toEndOf="@+id/account_iv_profile"
                 android:layout_alignParentBottom="true"

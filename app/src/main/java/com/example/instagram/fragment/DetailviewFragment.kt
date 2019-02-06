@@ -39,9 +39,10 @@ class DetailviewFragment : Fragment(){
         init {
             firesotre?.collection("images")?.orderBy("timestamp", Query.Direction.DESCENDING)?.//내림차순 정렬
                 addSnapshotListener { querySnapshot, firebaseFirestoreException ->
+                    if(querySnapshot == null)return@addSnapshotListener
                     contentDTOs.clear()
                     contentUidList.clear()
-                    for(snapshot in querySnapshot!!.documents){
+                    for(snapshot in querySnapshot.documents){
                         val item = snapshot.toObject(ContentDTO::class.java)
                         contentDTOs.add(item!!)
                         contentUidList.add(snapshot.id)
@@ -78,6 +79,7 @@ class DetailviewFragment : Fragment(){
                 val fragment = UserFragment()
                 val bundle = Bundle()
                 bundle.putString("destinationUid",contentDTOs[position].uid)
+                bundle.putString("userId",contentDTOs[position].userId)
                 fragment.arguments = bundle
                 activity!!.supportFragmentManager.beginTransaction().replace(R.id.main_content,fragment).commit()
             }

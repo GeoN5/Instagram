@@ -14,6 +14,8 @@ import android.widget.ImageView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.example.instagram.R
+import com.example.instagram.activity.LoginActivity
+import com.example.instagram.activity.MainActivity
 import com.example.instagram.model.ContentDTO
 import com.example.instagram.model.FollowDTO
 import com.example.instagram.util.loadImage
@@ -21,6 +23,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.Transaction
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_user.view.*
 
 class UserFragment : Fragment(){
@@ -30,26 +33,43 @@ class UserFragment : Fragment(){
     lateinit var firestore : FirebaseFirestore
     lateinit var currentUserUid: String //자신의 uid
     lateinit var uid :String //내가 선택한 uid
+    lateinit var auth : FirebaseAuth
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         firestore = FirebaseFirestore.getInstance()
         currentUserUid = FirebaseAuth.getInstance().currentUser?.uid!!
-
-        if(arguments != null){
-            uid = arguments!!.getString("destinationUid")!!
-        }else{
-            uid = currentUserUid
-        }
-
+        auth = FirebaseAuth.getInstance()
         fragmentView =  inflater.inflate(R.layout.fragment_user,container,false)
+
+        if(arguments != null) {
+            uid = arguments!!.getString("destinationUid")!!
+                if (uid == currentUserUid) { //나의 유저페이지
+                    fragmentView.account_btn_follow_signout.text = getString(R.string.signout)
+                    fragmentView.account_btn_follow_signout.setOnClickListener {
+                        activity?.finish()
+                        startActivity(Intent(activity, LoginActivity::class.java))
+                        auth.signOut()
+                    }
+                } else { //제3자의 유저페이지
+                    fragmentView.account_btn_follow_signout.text = getString(R.string.follow)
+                    val mainActivity = (activity as MainActivity)
+                    mainActivity.toolbar_title_image.visibility = View.GONE
+                    mainActivity.toolbar_btn_back.visibility = View.VISIBLE
+                    mainActivity.toolbar_username.visibility = View.VISIBLE
+                    mainActivity.toolbar_username.text = arguments!!.getString("userId")
+                    mainActivity.toolbar_btn_back.setOnClickListener {
+                        mainActivity.bottom_navigation.selectedItemId = R.id.action_home
+                    }
+                    fragmentView.account_btn_follow_signout.setOnClickListener {
+                        requestFollow()
+                    }
+                }
+                //uid = currentUserUid
+        }
         fragmentView.account_iv_profile.setOnClickListener {
             val photoPickerIntent = Intent(Intent.ACTION_PICK)
             photoPickerIntent.type = "image/*"
             activity?.startActivityForResult(photoPickerIntent,PICK_PROFILE_FROM_ALBUM)
-
-        }
-        fragmentView.account_btn_follow_signout.setOnClickListener {
-            requestFollow()
         }
         fragmentView.account_recyclerview.adapter = UserFragmentRecyclerviewAdapter()
         fragmentView.account_recyclerview.layoutManager = GridLayoutManager(context!!,3)
@@ -103,7 +123,8 @@ class UserFragment : Fragment(){
     private fun getProfileImages(){
         firestore.collection("profileImages").document(uid)
             .addSnapshotListener { documentSnapshot, firebaseFirestoreException ->
-                if(documentSnapshot!!.data != null){
+                if(documentSnapshot == null)return@addSnapshotListener
+                if(documentSnapshot.data != null){
                     val uri = documentSnapshot.data!!["image"]
                     Glide.with(context!!).load(uri).apply(RequestOptions().circleCrop()).into(fragmentView.account_iv_profile)
                 }
@@ -119,8 +140,9 @@ class UserFragment : Fragment(){
 
             firestore.collection("images").whereEqualTo("uid",uid)//필터링 메소드 2번 호출하면 왜 querySnapshot NPE??
                 .addSnapshotListener { querySnapshot, firebaseFirestoreException ->
+                    if(querySnapshot == null)return@addSnapshotListener
                     contentDTOs.clear()
-                    for(snapshot in querySnapshot!!.documents){
+                    for(snapshot in querySnapshot.documents){
                         val item = snapshot.toObject(ContentDTO::class.java)
                         contentDTOs.add(item!!)
                     }

@@ -12,6 +12,7 @@ import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AlertDialog
 import android.view.MenuItem
+import android.view.View
 import android.widget.Toast
 import com.example.instagram.R
 import com.example.instagram.fragment.AlarmFragment
@@ -30,6 +31,7 @@ class MainActivity : AppCompatActivity() ,BottomNavigationView.OnNavigationItemS
     lateinit var storage : FirebaseStorage
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
+        setToolbarDefault()
         when(item.itemId){
             R.id.action_home -> {
                 val detailviewFragment = DetailviewFragment()
@@ -55,6 +57,9 @@ class MainActivity : AppCompatActivity() ,BottomNavigationView.OnNavigationItemS
             }
             R.id.action_account -> {
                 val userFragment = UserFragment()
+                val bundle = Bundle()
+                bundle.putString("destinationUid", FirebaseAuth.getInstance().currentUser!!.uid)
+                userFragment.arguments = bundle
                 supportFragmentManager.beginTransaction().replace(R.id.main_content,userFragment).commit()
                 return true
             }
@@ -71,6 +76,12 @@ class MainActivity : AppCompatActivity() ,BottomNavigationView.OnNavigationItemS
         bottom_navigation.selectedItemId = R.id.action_home
         //photo
         ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),1)
+    }
+
+    private fun setToolbarDefault(){
+        toolbar_btn_back.visibility = View.GONE
+        toolbar_username.visibility = View.GONE
+        toolbar_title_image.visibility = View.VISIBLE
     }
 
     override fun onBackPressed() {
