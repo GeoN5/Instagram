@@ -9,9 +9,13 @@ import android.view.View
 import android.view.ViewGroup
 import com.example.instagram.R
 import com.example.instagram.model.ContentDTO
+import com.example.instagram.util.DateUtil
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import kotlinx.android.synthetic.main.activity_comment.*
+import kotlinx.android.synthetic.main.item_comment.view.*
+import java.util.*
 
 class CommentActivity : AppCompatActivity() {
 
@@ -21,9 +25,9 @@ class CommentActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_comment)
 
+        contentUid = intent.getStringExtra("contentUid")
         comment_recyclerview.adapter = CommentRecyclerViewAdapter()
         comment_recyclerview.layoutManager = LinearLayoutManager(this)
-        contentUid = intent.getStringExtra("contentUid")
         comment_btn_send.setOnClickListener {
             val comment = ContentDTO.Comment()
             comment.userId = FirebaseAuth.getInstance().currentUser?.email
@@ -32,12 +36,27 @@ class CommentActivity : AppCompatActivity() {
             comment.timestamp = System.currentTimeMillis()
             FirebaseFirestore.getInstance().collection("images")
                 .document(contentUid).collection("comments").document().set(comment)
+            comment_edit_message.text = null
         }
 
     }
 
     inner class CommentRecyclerViewAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>(){
 
+        private val comments : ArrayList<ContentDTO.Comment> = ArrayList()
+
+        init {
+            FirebaseFirestore.getInstance().collection("images").document(contentUid).collection("comments")
+                .orderBy("timestamp",Query.Direction.DESCENDING)
+                .addSnapshotListener { querySnapshot, firebaseFirestoreException ->
+                    if(querySnapshot == null)return@addSnapshotListener
+                    comments.clear()
+                    for(snapshot in querySnapshot.documents){
+                        comments.add(snapshot.toObject(ContentDTO.Comment::class.java)!!)
+                    }
+                    notifyDataSetChanged()
+                }
+        }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
             val view = LayoutInflater.from(this@CommentActivity).inflate(R.layout.item_comment,parent,false)
@@ -45,11 +64,14 @@ class CommentActivity : AppCompatActivity() {
         }
 
         override fun getItemCount(): Int {
-            return 3
+            return comments.size
         }
 
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-
+            val view = holder.itemView
+            view.commentviewItem_textview_date.text = DateUtil.formatDate(Date(comments[position].timestamp!!))
+            view.commentviewItem_textview_profile.text = comments[position].userId
+            view.commentviewItem_textview_comment.text = comments[position].comment
         }
 
     }

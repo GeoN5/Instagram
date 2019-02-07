@@ -157,7 +157,6 @@ class UserFragment : Fragment(){
         var contentDTOs : ArrayList<ContentDTO> = ArrayList()
 
         init {
-
             firestore.collection("images").whereEqualTo("uid",uid)//필터링 메소드 2번 호출하면 왜 querySnapshot NPE??
                 .addSnapshotListener { querySnapshot, firebaseFirestoreException ->
                     if(querySnapshot == null)return@addSnapshotListener
