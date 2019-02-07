@@ -1,5 +1,6 @@
 package com.example.instagram.fragment
 
+import android.content.Intent
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v7.widget.LinearLayoutManager
@@ -8,6 +9,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.example.instagram.R
+import com.example.instagram.activity.CommentActivity
 import com.example.instagram.model.ContentDTO
 import com.example.instagram.util.loadImage
 import com.google.firebase.auth.FirebaseAuth
@@ -74,7 +76,6 @@ class DetailviewFragment : Fragment(){
             }else{ //클릭되있지 않은 경우
                 viewHolder.detailviewitem_favorite_imageview.setImageResource(R.drawable.ic_favorite_border)
             }
-
             viewHolder.detailviewitem_profile_image.setOnClickListener {//프래그먼트간의 전환
                 val fragment = UserFragment()
                 val bundle = Bundle()
@@ -82,6 +83,9 @@ class DetailviewFragment : Fragment(){
                 bundle.putString("userId",contentDTOs[position].userId)
                 fragment.arguments = bundle
                 activity!!.supportFragmentManager.beginTransaction().replace(R.id.main_content,fragment).commit()
+            }
+            viewHolder.detailviewitem_comment_imageview.setOnClickListener {
+                startActivity(Intent(context,CommentActivity::class.java).putExtra("contentUid",contentUidList[position]))
             }
 
         }

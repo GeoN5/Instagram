@@ -14,7 +14,8 @@
             android:supportsRtl="true"
             android:theme="@style/AppTheme"
             tools:ignore="GoogleAppIndexingWarning">
-
+        <activity android:name=".activity.CommentActivity">
+        </activity>
         <activity android:name=".activity.AddPhotoActivity"/>
         <activity android:name=".activity.MainActivity"/>
         <activity android:name=".activity.LoginActivity">
