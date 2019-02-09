@@ -2,14 +2,76 @@ package com.example.instagram.fragment
 
 import android.os.Bundle
 import android.support.v4.app.Fragment
+import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.example.instagram.R
+import com.example.instagram.model.AlarmDTO
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
+import kotlinx.android.synthetic.main.fragment_alarm.view.*
+import kotlinx.android.synthetic.main.item_alarm.view.*
 
 class AlarmFragment : Fragment(){
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_alarm,container,false)
+        val view =  inflater.inflate(R.layout.fragment_alarm,container,false)
+        view.alarmfragment_recyclerview.adapter = AlarmRecyclerviewAdapter()
+        view.alarmfragment_recyclerview.layoutManager = LinearLayoutManager(context)
+        return view
     }
+
+    inner class AlarmRecyclerviewAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>(){
+
+        val alarmDTOlist :ArrayList<AlarmDTO> = ArrayList()
+
+        init {
+            val uid = FirebaseAuth.getInstance().currentUser?.uid
+            FirebaseFirestore.getInstance().collection("alarms").whereEqualTo("destinationUid",uid)
+                .orderBy("timestamp",Query.Direction.DESCENDING).addSnapshotListener { querySnapshot, firebaseFirestoreException ->
+                    if(querySnapshot == null)return@addSnapshotListener
+                    alarmDTOlist.clear()
+                    for(snapshot in querySnapshot.documents){
+                        alarmDTOlist.add(snapshot.toObject(AlarmDTO::class.java)!!)
+                    }
+                    notifyDataSetChanged()
+                }
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+            val view = LayoutInflater.from(context).inflate(R.layout.item_alarm,parent,false)
+            return AlarmViewHolder(view)
+        }
+
+        override fun getItemCount(): Int {
+            return alarmDTOlist.size
+        }
+
+        override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+            val commentTextView = holder.itemView.alarmviewItem_textview_message
+
+            when(alarmDTOlist[position].kind){
+                0 -> {
+                    val str0 = "${alarmDTOlist[position].userId}${getString(R.string.alarm_favorite)}"
+                    commentTextView.text = str0
+                }
+                1 -> {
+                    val str1 = "${alarmDTOlist[position].userId}${getString(R.string.alarm_who)}" +
+                            "\"${alarmDTOlist[position].message}\"${getString(R.string.alarm_comment)}"
+                    commentTextView.text = str1
+                }
+                2 -> {
+                    val str2 = "${alarmDTOlist[position].userId}${getString(R.string.alarm_follow)}"
+                    commentTextView.text = str2
+                }
+            }
+        }
+
+    }
+
 }
+
+class AlarmViewHolder(view: View) : RecyclerView.ViewHolder(view)

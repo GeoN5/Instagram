@@ -10,6 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import com.example.instagram.R
 import com.example.instagram.activity.CommentActivity
+import com.example.instagram.model.AlarmDTO
 import com.example.instagram.model.ContentDTO
 import com.example.instagram.util.loadImage
 import com.google.firebase.auth.FirebaseAuth
@@ -85,8 +86,11 @@ class DetailviewFragment : Fragment(){
                 activity!!.supportFragmentManager.beginTransaction().replace(R.id.main_content,fragment).commit()
             }
             viewHolder.detailviewitem_comment_imageview.setOnClickListener {
-                startActivity(Intent(context,CommentActivity::class.java).putExtra("contentUid",contentUidList[position]))
+                //게시물 id,게시물 작성자 uid 넘김
+                startActivity(Intent(context,CommentActivity::class.java).
+                    putExtra("contentUid",contentUidList[position]).putExtra("destinationUid",contentDTOs[position].uid))
             }
+            viewHolder.detailviewitem_profile_image.setImageResource(R.mipmap.ic_launcher)
 
         }
 
@@ -94,16 +98,28 @@ class DetailviewFragment : Fragment(){
             val tsDoc = firesotre?.collection("images")?.document(contentUidList[position])
             firesotre?.runTransaction { transaction: Transaction -> //다른 사용자가 도큐먼트를 점유할 수 없음
                 val contentDTO = transaction.get(tsDoc!!).toObject(ContentDTO::class.java)
-                if(contentDTO?.favorites?.containsKey(uid)!!){ //좋아요를 누른상태
+                if(contentDTO?.favorites?.containsKey(uid)!!){ //좋아요를 누른상태 -> 누르지 않는 상태
                     contentDTO.favorites.remove(uid)
                     contentDTO.favoriteCount -= 1
-                }else{ //좋아요를 누르지 않은 상태
+                }else{ //좋아요를 누르지 않은 상태 -> 누르는 상태
                     contentDTO.favorites[uid!!] = true
                     contentDTO.favoriteCount += 1
+                    favoriteAlarm(contentDTOs[position].uid!!)//게시물 올린 사람 uid
                 }
                 transaction.set(tsDoc,contentDTO)
                 return@runTransaction
             }
+        }
+
+        private fun favoriteAlarm(destinationUid: String){
+            val alarmDTO = AlarmDTO()
+            alarmDTO.destinationUid = destinationUid
+            alarmDTO.userId = FirebaseAuth.getInstance().currentUser?.email
+            alarmDTO.uid = FirebaseAuth.getInstance().currentUser?.uid
+            alarmDTO.kind = 0
+            alarmDTO.timestamp = System.currentTimeMillis()
+
+            FirebaseFirestore.getInstance().collection("alarms").document().set(alarmDTO)
         }
 
     }

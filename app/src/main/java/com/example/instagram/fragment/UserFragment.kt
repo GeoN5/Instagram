@@ -16,6 +16,7 @@ import com.bumptech.glide.request.RequestOptions
 import com.example.instagram.R
 import com.example.instagram.activity.LoginActivity
 import com.example.instagram.activity.MainActivity
+import com.example.instagram.model.AlarmDTO
 import com.example.instagram.model.ContentDTO
 import com.example.instagram.model.FollowDTO
 import com.example.instagram.util.loadImage
@@ -116,6 +117,7 @@ class UserFragment : Fragment(){
             }else{ //제3자를 내가 아직 팔로워 하지 않았을 경우 -> 팔로워 하겠다
                 followDTO!!.followerCount += 1
                 followDTO!!.followers[currentUserUid] = true
+                followerAlarm(uid)
             }
             transaction.set(tsDocFollower,followDTO!!)
             return@runTransaction
@@ -152,18 +154,28 @@ class UserFragment : Fragment(){
             }
     }
 
+    private fun followerAlarm(destinationUid: String){
+        val alarmDTO = AlarmDTO()
+        alarmDTO.destinationUid = destinationUid
+        alarmDTO.userId = auth.currentUser?.email
+        alarmDTO.uid = auth.currentUser?.uid
+        alarmDTO.kind = 2
+        alarmDTO.timestamp = System.currentTimeMillis()
+
+        FirebaseFirestore.getInstance().collection("alarms").document().set(alarmDTO)
+    }
+
     inner class UserFragmentRecyclerviewAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>(){
 
         var contentDTOs : ArrayList<ContentDTO> = ArrayList()
 
         init {
-            firestore.collection("images").whereEqualTo("uid",uid)//필터링 메소드 2번 호출하면 왜 querySnapshot NPE??
+            firestore.collection("images").whereEqualTo("uid",uid).orderBy("timestamp",Query.Direction.DESCENDING)//필터링 메소드 2번 호출하면 왜 querySnapshot NPE??
                 .addSnapshotListener { querySnapshot, firebaseFirestoreException ->
                     if(querySnapshot == null)return@addSnapshotListener
                     contentDTOs.clear()
                     for(snapshot in querySnapshot.documents){
-                        val item = snapshot.toObject(ContentDTO::class.java)
-                        contentDTOs.add(item!!)
+                        contentDTOs.add(snapshot.toObject(ContentDTO::class.java)!!)
                     }
                     fragmentView.account_tv_post_count.text = itemCount.toString()
                     notifyDataSetChanged()
