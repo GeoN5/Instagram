@@ -27,38 +27,36 @@ import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() ,BottomNavigationView.OnNavigationItemSelectedListener{
 
-    val PICK_PROFILE_FROM_ALBUM = 10
-    lateinit var storage : FirebaseStorage
+    private val PICK_PROFILE_FROM_ALBUM = 10
+    private lateinit var storage : FirebaseStorage
+    private lateinit var auth : FirebaseAuth
+    private lateinit var firestore : FirebaseFirestore
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         setToolbarDefault()
         when(item.itemId){
             R.id.action_home -> {
-                val detailviewFragment = DetailviewFragment()
-                supportFragmentManager.beginTransaction().replace(R.id.main_content,detailviewFragment).commit()
+                supportFragmentManager.beginTransaction().replace(R.id.main_content,DetailviewFragment()).commit()
                 return true
             }
             R.id.action_search -> {
-                val gridFragment = GridFragment()
-                supportFragmentManager.beginTransaction().replace(R.id.main_content,gridFragment).commit()
+                supportFragmentManager.beginTransaction().replace(R.id.main_content,GridFragment()).commit()
                 return true
             }
             R.id.action_add_photo -> {
-                if(ContextCompat.checkSelfPermission(this,Manifest.permission.READ_EXTERNAL_STORAGE)
-                    == PackageManager.PERMISSION_GRANTED ) {
+                if(ContextCompat.checkSelfPermission(this,Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED ) {
                     startActivity(Intent(this, AddPhotoActivity::class.java))
                 }
                 return true
             }
             R.id.action_favorite_alarm -> {
-                val alarmFragment = AlarmFragment()
-                supportFragmentManager.beginTransaction().replace(R.id.main_content,alarmFragment).commit()
+                supportFragmentManager.beginTransaction().replace(R.id.main_content,AlarmFragment()).commit()
                 return true
             }
             R.id.action_account -> {
                 val userFragment = UserFragment()
                 val bundle = Bundle()
-                bundle.putString("destinationUid", FirebaseAuth.getInstance().currentUser!!.uid)
+                bundle.putString("destinationUid", FirebaseAuth.getInstance().currentUser!!.uid) //자신의 uid를 넘김
                 userFragment.arguments = bundle
                 supportFragmentManager.beginTransaction().replace(R.id.main_content,userFragment).commit()
                 return true
@@ -71,11 +69,18 @@ class MainActivity : AppCompatActivity() ,BottomNavigationView.OnNavigationItemS
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        storage = FirebaseStorage.getInstance()
+        firebaseInit()
+
         bottom_navigation.setOnNavigationItemSelectedListener(this)
         bottom_navigation.selectedItemId = R.id.action_home
         //photo
         ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),1)
+    }
+
+    private fun firebaseInit(){
+        storage = FirebaseStorage.getInstance()
+        auth = FirebaseAuth.getInstance()
+        firestore = FirebaseFirestore.getInstance()
     }
 
     private fun setToolbarDefault(){
@@ -94,11 +99,13 @@ class MainActivity : AppCompatActivity() ,BottomNavigationView.OnNavigationItemS
             }.create().show()
     }
 
+    //UserFragment의 startActivityForResult() 처리는 해당 뷰를 담는 액티비티에서 처리
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if(requestCode == PICK_PROFILE_FROM_ALBUM && resultCode == Activity.RESULT_OK){
             val imageUri = data?.data
-            val uid = FirebaseAuth.getInstance().currentUser?.uid
+            val uid = auth.currentUser?.uid
+            //uid 값으로 만들어서 프로필이 덮어쓰기
             val storageRef = storage.reference.child("userProfileImages").child(uid!!)
 
             storageRef.putFile(imageUri!!).addOnFailureListener {
@@ -110,7 +117,7 @@ class MainActivity : AppCompatActivity() ,BottomNavigationView.OnNavigationItemS
                         val uri = task.result.toString() //업로드된 이미지 주소
                         val map = HashMap<String,Any>()
                         map["image"] = uri
-                        FirebaseFirestore.getInstance().collection("profileImages").document(uid).set(map)
+                        firestore.collection("profileImages").document(uid).set(map)
                     }
                 }
         }
