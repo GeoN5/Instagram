@@ -12,8 +12,11 @@ import com.example.instagram.R
 import com.example.instagram.activity.CommentActivity
 import com.example.instagram.model.AlarmDTO
 import com.example.instagram.model.ContentDTO
+import com.example.instagram.model.FollowDTO
 import com.example.instagram.util.loadImage
+import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.Transaction
@@ -45,6 +48,17 @@ class DetailviewFragment : Fragment(){
         var uid = auth.currentUser?.uid //현재 로그인된 유저의 uid
 
         init {
+            fireStore.collection("users").document(uid!!).get().addOnCompleteListener { task: Task<DocumentSnapshot> ->
+                if(task.isSuccessful){
+                    val followDTO = task.result?.toObject(FollowDTO::class.java)
+                    if(followDTO != null) {
+                        getContents(followDTO.followings)
+                    }
+                }
+            }
+        }
+
+        private fun getContents(followings:MutableMap<String,Boolean>){
             fireStore.collection("images").orderBy("timestamp", Query.Direction.DESCENDING)
                 .addSnapshotListener { querySnapshot, _ ->
                     if(querySnapshot == null)return@addSnapshotListener
@@ -52,12 +66,15 @@ class DetailviewFragment : Fragment(){
                     contentUidList.clear()
                     for(snapshot in querySnapshot.documents){
                         val item = snapshot.toObject(ContentDTO::class.java)
-                        contentDTOs.add(item!!)
-                        contentUidList.add(snapshot.id)
+                        if(followings.keys.contains(item?.uid)) {
+                            contentDTOs.add(item!!)
+                            contentUidList.add(snapshot.id)
+                        }
                     }
                     notifyDataSetChanged()
                 }
         }
+
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
             val view = LayoutInflater.from(context).inflate(R.layout.item_detail,parent,false)
             return DetailViewHolder(view)
