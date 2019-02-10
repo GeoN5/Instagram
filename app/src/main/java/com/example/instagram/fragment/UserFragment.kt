@@ -6,7 +6,6 @@ import android.support.v4.app.Fragment
 import android.support.v7.widget.GridLayoutManager
 import android.support.v7.widget.LinearLayoutCompat
 import android.support.v7.widget.RecyclerView
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -29,18 +28,17 @@ import kotlinx.android.synthetic.main.fragment_user.view.*
 
 class UserFragment : Fragment(){
 
-    val PICK_PROFILE_FROM_ALBUM = 10
-    lateinit var fragmentView: View
-    lateinit var firestore : FirebaseFirestore
-    lateinit var currentUserUid: String //자신의 uid
-    lateinit var uid :String //내가 선택한 uid
-    lateinit var auth : FirebaseAuth
+    private val PICK_PROFILE_FROM_ALBUM = 10
+    private lateinit var fragmentView: View
+    private lateinit var fireStore : FirebaseFirestore
+    private lateinit var currentUserUid: String //자신의 uid
+    private lateinit var uid :String //내가 선택한 uid
+    private lateinit var auth : FirebaseAuth
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        firestore = FirebaseFirestore.getInstance()
-        currentUserUid = FirebaseAuth.getInstance().currentUser?.uid!!
-        auth = FirebaseAuth.getInstance()
         fragmentView =  inflater.inflate(R.layout.fragment_user,container,false)
+        firebaseInit()
+        currentUserUid = auth.currentUser?.uid!!
 
         if(arguments != null) {
             uid = arguments!!.getString("destinationUid")!!
@@ -65,14 +63,16 @@ class UserFragment : Fragment(){
                         requestFollow()
                     }
                 }
-                //uid = currentUserUid
         }
+
         fragmentView.account_iv_profile.setOnClickListener {
-            val photoPickerIntent = Intent(Intent.ACTION_PICK)
-            photoPickerIntent.type = "image/*"
-            activity?.startActivityForResult(photoPickerIntent,PICK_PROFILE_FROM_ALBUM)
+            if(currentUserUid == uid) {
+                val photoPickerIntent = Intent(Intent.ACTION_PICK)
+                photoPickerIntent.type = "image/*"
+                activity?.startActivityForResult(photoPickerIntent, PICK_PROFILE_FROM_ALBUM)
+            }
         }
-        fragmentView.account_recyclerview.adapter = UserFragmentRecyclerviewAdapter()
+        fragmentView.account_recyclerview.adapter = UserRecyclerViewAdapter()
         fragmentView.account_recyclerview.layoutManager = GridLayoutManager(context!!,3)
         getProfileImages()
         getFollower()
@@ -80,9 +80,14 @@ class UserFragment : Fragment(){
         return fragmentView
     }
 
-    private fun requestFollow(){
-        val tsDocFollowing = firestore.collection("users").document(currentUserUid)
-        firestore.runTransaction { transaction: Transaction ->
+    private fun firebaseInit(){
+        auth = FirebaseAuth.getInstance()
+        fireStore = FirebaseFirestore.getInstance()
+    }
+
+    private fun requestFollow(){ //내가 제3자의 팔로우 버튼을 눌렀을 때
+        val tsDocFollowing = fireStore.collection("users").document(currentUserUid)
+        fireStore.runTransaction { transaction: Transaction ->
             var followDTO = transaction.get(tsDocFollowing).toObject(FollowDTO::class.java)
             if(followDTO == null){ //내가 아무도 팔로잉하고 있지 않을 경우
                 followDTO = FollowDTO()
@@ -101,8 +106,8 @@ class UserFragment : Fragment(){
             transaction.set(tsDocFollowing,followDTO)
             return@runTransaction
         }
-        val tsDocFollower = firestore.collection("users").document(uid)
-        firestore.runTransaction { transaction: Transaction ->
+        val tsDocFollower = fireStore.collection("users").document(uid)
+        fireStore.runTransaction { transaction: Transaction ->
             var followDTO = transaction.get(tsDocFollower).toObject(FollowDTO::class.java)
             if(followDTO == null){ //아무도 제3자를 팔로워 하지 않았을 경우
                 followDTO = FollowDTO()
@@ -125,8 +130,8 @@ class UserFragment : Fragment(){
     }
 
     private fun getProfileImages(){
-        firestore.collection("profileImages").document(uid)
-            .addSnapshotListener { documentSnapshot, firebaseFirestoreException ->
+        fireStore.collection("profileImages").document(uid)
+            .addSnapshotListener { documentSnapshot, _ ->
                 if(documentSnapshot == null)return@addSnapshotListener
                 if(documentSnapshot.data != null){
                     val uri = documentSnapshot.data!!["image"]
@@ -137,8 +142,8 @@ class UserFragment : Fragment(){
     }
 
     private fun getFollower(){
-        firestore.collection("users").document(uid)
-            .addSnapshotListener { documentSnapshot, firebaseFirestoreException ->
+        fireStore.collection("users").document(uid)
+            .addSnapshotListener { documentSnapshot, _ ->
                 if(documentSnapshot == null)return@addSnapshotListener
                 val followDTO = documentSnapshot.toObject(FollowDTO::class.java)
                 fragmentView.account_tv_follower_count.text = followDTO?.followerCount.toString()
@@ -146,8 +151,8 @@ class UserFragment : Fragment(){
     }
 
     private fun getFollowing(){
-        firestore.collection("users").document(uid)
-            .addSnapshotListener { documentSnapshot, firebaseFirestoreException ->
+        fireStore.collection("users").document(uid)
+            .addSnapshotListener { documentSnapshot, _ ->
                 if(documentSnapshot == null)return@addSnapshotListener
                 val followDTO = documentSnapshot.toObject(FollowDTO::class.java)
                 fragmentView.account_tv_following_count.text = followDTO?.followingCount.toString()
@@ -162,16 +167,16 @@ class UserFragment : Fragment(){
         alarmDTO.kind = 2
         alarmDTO.timestamp = System.currentTimeMillis()
 
-        FirebaseFirestore.getInstance().collection("alarms").document().set(alarmDTO)
+        fireStore.collection("alarms").document().set(alarmDTO)
     }
 
-    inner class UserFragmentRecyclerviewAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>(){
+    inner class UserRecyclerViewAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>(){
 
         var contentDTOs : ArrayList<ContentDTO> = ArrayList()
 
         init {
-            firestore.collection("images").whereEqualTo("uid",uid).orderBy("timestamp",Query.Direction.DESCENDING)//필터링 메소드 2번 호출하면 왜 querySnapshot NPE??
-                .addSnapshotListener { querySnapshot, firebaseFirestoreException ->
+            fireStore.collection("images").whereEqualTo("uid",uid).orderBy("timestamp",Query.Direction.DESCENDING)
+                .addSnapshotListener { querySnapshot, _ ->
                     if(querySnapshot == null)return@addSnapshotListener
                     contentDTOs.clear()
                     for(snapshot in querySnapshot.documents){

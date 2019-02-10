@@ -17,21 +17,30 @@ import kotlinx.android.synthetic.main.item_alarm.view.*
 
 class AlarmFragment : Fragment(){
 
+    private lateinit var auth : FirebaseAuth
+    private lateinit var fireStore : FirebaseFirestore
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        val view =  inflater.inflate(R.layout.fragment_alarm,container,false)
-        view.alarmfragment_recyclerview.adapter = AlarmRecyclerviewAdapter()
-        view.alarmfragment_recyclerview.layoutManager = LinearLayoutManager(context)
-        return view
+        val fragmentView =  inflater.inflate(R.layout.fragment_alarm,container,false)
+        firebaseInit()
+        fragmentView.alarmfragment_recyclerview.adapter = AlarmRecyclerViewAdapter()
+        fragmentView.alarmfragment_recyclerview.layoutManager = LinearLayoutManager(context)
+        return fragmentView
     }
 
-    inner class AlarmRecyclerviewAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>(){
+    private fun firebaseInit(){
+        auth = FirebaseAuth.getInstance()
+        fireStore = FirebaseFirestore.getInstance()
+    }
 
-        val alarmDTOlist :ArrayList<AlarmDTO> = ArrayList()
+    inner class AlarmRecyclerViewAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>(){
+
+        private val alarmDTOlist :ArrayList<AlarmDTO> = ArrayList()
 
         init {
-            val uid = FirebaseAuth.getInstance().currentUser?.uid
-            FirebaseFirestore.getInstance().collection("alarms").whereEqualTo("destinationUid",uid)
-                .orderBy("timestamp",Query.Direction.DESCENDING).addSnapshotListener { querySnapshot, firebaseFirestoreException ->
+            val uid = auth.currentUser?.uid
+            fireStore.collection("alarms").whereEqualTo("destinationUid",uid)
+                .orderBy("timestamp",Query.Direction.DESCENDING).addSnapshotListener { querySnapshot, _ ->
                     if(querySnapshot == null)return@addSnapshotListener
                     alarmDTOlist.clear()
                     for(snapshot in querySnapshot.documents){

@@ -12,29 +12,30 @@ import android.widget.ImageView
 import com.example.instagram.R
 import com.example.instagram.model.ContentDTO
 import com.example.instagram.util.loadImage
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.android.synthetic.main.fragment_grid.view.*
 
 class GridFragment : Fragment(){
 
-    lateinit var mainView :View
+    private lateinit var fragmentView :View
+    private lateinit var fireStore :FirebaseFirestore
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        mainView =  inflater.inflate(R.layout.fragment_grid,container,false)
-        mainView.gridfragment_recyclerview.adapter = GridFragmentRecyclerviewAdapter()
-        mainView.gridfragment_recyclerview.layoutManager = GridLayoutManager(context,3)
-        return mainView
+        fragmentView =  inflater.inflate(R.layout.fragment_grid,container,false)
+        fireStore = FirebaseFirestore.getInstance()
+        fragmentView.gridfragment_recyclerview.adapter = GridRecyclerViewAdapter()
+        fragmentView.gridfragment_recyclerview.layoutManager = GridLayoutManager(context,3)
+        return fragmentView
     }
 
-    inner class GridFragmentRecyclerviewAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>(){
+    inner class GridRecyclerViewAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>(){
 
         var contentDTOs : ArrayList<ContentDTO> = ArrayList()
 
         init {
-            FirebaseFirestore.getInstance().collection("images").orderBy("timestamp",Query.Direction.DESCENDING)//내림차순 정렬
-                .addSnapshotListener { querySnapshot, firebaseFirestoreException ->
+            fireStore.collection("images").orderBy("timestamp",Query.Direction.DESCENDING)//내림차순 정렬
+                .addSnapshotListener { querySnapshot, _ ->
                     if(querySnapshot == null)return@addSnapshotListener
                     contentDTOs.clear()
                     for(snapshot in querySnapshot.documents){
