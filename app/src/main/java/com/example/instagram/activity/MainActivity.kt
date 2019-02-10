@@ -22,6 +22,7 @@ import com.example.instagram.fragment.UserFragment
 import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.iid.FirebaseInstanceId
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -75,6 +76,15 @@ class MainActivity : AppCompatActivity() ,BottomNavigationView.OnNavigationItemS
         bottom_navigation.selectedItemId = R.id.action_home
         //photo
         ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),1)
+        registerPushToken()
+    }
+
+    private fun registerPushToken(){
+        val pushToken = FirebaseInstanceId.getInstance().token
+        val uid = auth.currentUser?.uid
+        val map = mutableMapOf<String,Any>() //Map을 통해서만 저장 가능
+        map["pushToken"] = pushToken!!
+        fireStore.collection("pushtokens").document(uid!!).set(map)
     }
 
     private fun firebaseInit(){
