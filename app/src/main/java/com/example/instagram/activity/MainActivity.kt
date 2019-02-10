@@ -30,7 +30,7 @@ class MainActivity : AppCompatActivity() ,BottomNavigationView.OnNavigationItemS
     private val PICK_PROFILE_FROM_ALBUM = 10
     private lateinit var storage : FirebaseStorage
     private lateinit var auth : FirebaseAuth
-    private lateinit var firestore : FirebaseFirestore
+    private lateinit var fireStore : FirebaseFirestore
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         setToolbarDefault()
@@ -56,7 +56,7 @@ class MainActivity : AppCompatActivity() ,BottomNavigationView.OnNavigationItemS
             R.id.action_account -> {
                 val userFragment = UserFragment()
                 val bundle = Bundle()
-                bundle.putString("destinationUid", FirebaseAuth.getInstance().currentUser!!.uid) //자신의 uid를 넘김
+                bundle.putString("destinationUid", auth.currentUser!!.uid) //자신의 uid를 넘김
                 userFragment.arguments = bundle
                 supportFragmentManager.beginTransaction().replace(R.id.main_content,userFragment).commit()
                 return true
@@ -80,7 +80,7 @@ class MainActivity : AppCompatActivity() ,BottomNavigationView.OnNavigationItemS
     private fun firebaseInit(){
         storage = FirebaseStorage.getInstance()
         auth = FirebaseAuth.getInstance()
-        firestore = FirebaseFirestore.getInstance()
+        fireStore = FirebaseFirestore.getInstance()
     }
 
     private fun setToolbarDefault(){
@@ -117,7 +117,7 @@ class MainActivity : AppCompatActivity() ,BottomNavigationView.OnNavigationItemS
                         val uri = task.result.toString() //업로드된 이미지 주소
                         val map = HashMap<String,Any>()
                         map["image"] = uri
-                        firestore.collection("profileImages").document(uid).set(map)
+                        fireStore.collection("profileImages").document(uid).set(map)
                     }
                 }
         }

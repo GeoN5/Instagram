@@ -21,11 +21,11 @@ import java.util.*
 
 class CommentActivity : AppCompatActivity() {
 
-    lateinit var contentUid : String //게시물 id
-    lateinit var destinationUid: String //게시물 올린 사람의 uid
+    private lateinit var contentUid : String //게시물 id
+    private lateinit var destinationUid: String //게시물 올린 사람의 uid
     private lateinit var storage : FirebaseStorage
     private lateinit var auth : FirebaseAuth
-    private lateinit var firestore : FirebaseFirestore
+    private lateinit var fireStore : FirebaseFirestore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,12 +40,12 @@ class CommentActivity : AppCompatActivity() {
 
         comment_btn_send.setOnClickListener {
             val comment = ContentDTO.Comment()
-            comment.userId = FirebaseAuth.getInstance().currentUser?.email
+            comment.userId = auth.currentUser?.email
             comment.comment = comment_edit_message.text.toString()
-            comment.uid = FirebaseAuth.getInstance().currentUser?.uid
+            comment.uid = auth.currentUser?.uid
             comment.timestamp = System.currentTimeMillis()
 
-            firestore.collection("images")
+            fireStore.collection("images")
                 .document(contentUid).collection("comments").document().set(comment)
             commentAlarm(destinationUid,comment_edit_message.text.toString())
             comment_edit_message.text = null
@@ -56,19 +56,19 @@ class CommentActivity : AppCompatActivity() {
     private fun firebaseInit(){
         storage = FirebaseStorage.getInstance()
         auth = FirebaseAuth.getInstance()
-        firestore = FirebaseFirestore.getInstance()
+        fireStore = FirebaseFirestore.getInstance()
     }
 
     private fun commentAlarm(destinationUid: String,message: String){
         val alarmDTO = AlarmDTO()
         alarmDTO.destinationUid = destinationUid
-        alarmDTO.userId = FirebaseAuth.getInstance().currentUser?.email
-        alarmDTO.uid  = FirebaseAuth.getInstance().currentUser?.uid
+        alarmDTO.userId = auth.currentUser?.email
+        alarmDTO.uid  = auth.currentUser?.uid
         alarmDTO.kind = 1 //댓글
         alarmDTO.message = message
         alarmDTO.timestamp = System.currentTimeMillis()
 
-        firestore.collection("alarms").document().set(alarmDTO)
+        fireStore.collection("alarms").document().set(alarmDTO)
     }
 
     inner class CommentRecyclerViewAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>(){
@@ -76,9 +76,9 @@ class CommentActivity : AppCompatActivity() {
         private val comments : ArrayList<ContentDTO.Comment> = ArrayList()
 
         init {
-            firestore.collection("images").document(contentUid).collection("comments")
+            fireStore.collection("images").document(contentUid).collection("comments")
                 .orderBy("timestamp",Query.Direction.DESCENDING)
-                .addSnapshotListener { querySnapshot, firebaseFirestoreException ->
+                .addSnapshotListener { querySnapshot, _ ->
                     if(querySnapshot == null)return@addSnapshotListener
                     comments.clear()
                     for(snapshot in querySnapshot.documents){

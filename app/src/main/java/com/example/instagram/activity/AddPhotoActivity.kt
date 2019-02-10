@@ -19,11 +19,11 @@ import java.util.*
 
 class AddPhotoActivity : AppCompatActivity() {
 
-    val PICK_IMAGE_FROM_ALBUM = 0
+    private val PICK_IMAGE_FROM_ALBUM = 0
     private lateinit var storage : FirebaseStorage
     private lateinit var photoUri : Uri
     private lateinit var auth : FirebaseAuth
-    private lateinit var firestore : FirebaseFirestore
+    private lateinit var fireStore : FirebaseFirestore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,7 +41,7 @@ class AddPhotoActivity : AppCompatActivity() {
         edit_input_layout.isCounterEnabled = true
         storage = FirebaseStorage.getInstance()
         auth = FirebaseAuth.getInstance()
-        firestore = FirebaseFirestore.getInstance()
+        fireStore = FirebaseFirestore.getInstance()
     }
 
     private fun listener(){
@@ -85,7 +85,7 @@ class AddPhotoActivity : AppCompatActivity() {
                 contentDTO.userId = auth.currentUser?.email //유저 이메일
                 contentDTO.timestamp = System.currentTimeMillis() //게시물 업로드 시간
 
-                firestore.collection("images").document().set(contentDTO)
+                fireStore.collection("images").document().set(contentDTO)
                 setResult(Activity.RESULT_OK)
                 finish()
             }

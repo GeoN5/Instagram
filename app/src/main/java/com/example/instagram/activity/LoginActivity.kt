@@ -34,9 +34,9 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
-        //printHashKey()
         init()
         buttonListener()
+        //printHashKey()
     }
 
 //    private fun printHashKey() { //facebook key hash
