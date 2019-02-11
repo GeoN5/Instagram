@@ -7,24 +7,28 @@ import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
 import com.example.instagram.R
 import com.example.instagram.model.AlarmDTO
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
-import kotlinx.android.synthetic.main.fragment_alarm.view.*
 import kotlinx.android.synthetic.main.item_alarm.view.*
 
 class AlarmFragment : Fragment(){
 
     private lateinit var auth : FirebaseAuth
     private lateinit var fireStore : FirebaseFirestore
+    private lateinit var recyclerview :RecyclerView
+    private lateinit var recyclerviewListenerRegistration :ListenerRegistration
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val fragmentView =  inflater.inflate(R.layout.fragment_alarm,container,false)
         firebaseInit()
-        fragmentView.alarmfragment_recyclerview.adapter = AlarmRecyclerViewAdapter()
-        fragmentView.alarmfragment_recyclerview.layoutManager = LinearLayoutManager(context)
+        recyclerview = fragmentView.findViewById(R.id.alarmfragment_recyclerview)
+
         return fragmentView
     }
 
@@ -33,13 +37,24 @@ class AlarmFragment : Fragment(){
         fireStore = FirebaseFirestore.getInstance()
     }
 
+    override fun onResume() {
+        super.onResume()
+        recyclerview.adapter = AlarmRecyclerViewAdapter()
+        recyclerview.layoutManager = LinearLayoutManager(context)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        recyclerviewListenerRegistration.remove()
+    }
+
     inner class AlarmRecyclerViewAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>(){
 
         private val alarmDTOlist :ArrayList<AlarmDTO> = ArrayList()
 
         init {
             val uid = auth.currentUser?.uid
-            fireStore.collection("alarms").whereEqualTo("destinationUid",uid)
+            recyclerviewListenerRegistration = fireStore.collection("alarms").whereEqualTo("destinationUid",uid)
                 .orderBy("timestamp",Query.Direction.DESCENDING).addSnapshotListener { querySnapshot, _ ->
                     if(querySnapshot == null)return@addSnapshotListener
                     alarmDTOlist.clear()
@@ -61,6 +76,7 @@ class AlarmFragment : Fragment(){
 
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
             val commentTextView = holder.itemView.alarmviewItem_textview_message
+            val profileImage = holder.itemView.alarmviewitem_imageview_profile
 
             when(alarmDTOlist[position].kind){
                 0 -> {
@@ -77,6 +93,14 @@ class AlarmFragment : Fragment(){
                     commentTextView.text = str2
                 }
             }
+
+            fireStore.collection("profileImages").document(alarmDTOlist[position].uid!!).get()
+                .addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        val url = task.result!!["image"]
+                        Glide.with(context!!).load(url).apply(RequestOptions().circleCrop()).into(profileImage)
+                    }
+                }
         }
 
     }

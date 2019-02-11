@@ -162,10 +162,10 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    override fun onResume() { //auto login
-        super.onResume()
-        moveMainPage(auth.currentUser)
-    }
+//    override fun onResume() { //auto login
+//        super.onResume()
+//        moveMainPage(auth.currentUser)
+//    }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)

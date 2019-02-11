@@ -23,6 +23,7 @@ import com.example.instagram.model.FollowDTO
 import com.example.instagram.util.loadImage
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.Transaction
 import kotlinx.android.synthetic.main.activity_main.*
@@ -36,6 +37,11 @@ class UserFragment : Fragment(){
     private lateinit var currentUserUid: String //자신의 uid
     private lateinit var uid :String //내가 선택한 uid
     private lateinit var auth : FirebaseAuth
+    private lateinit var followListenerRegistration: ListenerRegistration
+    private lateinit var followingListenerRegistration: ListenerRegistration
+    private lateinit var imageprofileListenerRegistration: ListenerRegistration
+    private lateinit var recyclerListenerRegistration: ListenerRegistration
+
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         fragmentView =  inflater.inflate(R.layout.fragment_user,container,false)
@@ -74,17 +80,32 @@ class UserFragment : Fragment(){
                 activity?.startActivityForResult(photoPickerIntent, PICK_PROFILE_FROM_ALBUM)
             }
         }
-        fragmentView.account_recyclerview.adapter = UserRecyclerViewAdapter()
-        fragmentView.account_recyclerview.layoutManager = GridLayoutManager(context!!,3)
-        getProfileImages()
-        getFollower()
-        getFollowing()
+
         return fragmentView
     }
 
     private fun firebaseInit(){
         auth = FirebaseAuth.getInstance()
         fireStore = FirebaseFirestore.getInstance()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        getProfileImages()
+        getFollowing()
+        getFollower()
+        fragmentView.account_recyclerview?.adapter = UserRecyclerViewAdapter()
+        fragmentView.account_recyclerview?.layoutManager = GridLayoutManager(activity!!, 3)
+
+    }
+
+    override fun onStop() {
+        super.onStop()
+        followListenerRegistration.remove()
+        followingListenerRegistration.remove()
+        imageprofileListenerRegistration.remove()
+        recyclerListenerRegistration.remove()
+
     }
 
     private fun requestFollow(){ //내가 제3자의 팔로우 버튼을 눌렀을 때
@@ -132,7 +153,7 @@ class UserFragment : Fragment(){
     }
 
     private fun getProfileImages(){
-        fireStore.collection("profileImages").document(uid)
+        imageprofileListenerRegistration = fireStore.collection("profileImages").document(uid)
             .addSnapshotListener { documentSnapshot, _ ->
                 if(documentSnapshot == null)return@addSnapshotListener
                 if(documentSnapshot.data != null){
@@ -144,31 +165,31 @@ class UserFragment : Fragment(){
     }
 
     private fun getFollower(){
-        fireStore.collection("users").document(uid)
+        followListenerRegistration = fireStore.collection("users").document(uid)
             .addSnapshotListener { documentSnapshot, _ ->
                 if(documentSnapshot == null)return@addSnapshotListener
                 val followDTO = documentSnapshot.toObject(FollowDTO::class.java)
                 fragmentView.account_tv_follower_count.text = followDTO?.followerCount.toString()
+                //뭔가 문제
+                if (followDTO?.followers?.containsKey(currentUserUid)!!) {
 
-//                if (followDTO?.followers?.containsKey(currentUserUid)!!) {
-//
-//                    fragmentView.account_btn_follow_signout?.text = getString(R.string.follow_cancel)
-//                    fragmentView.account_btn_follow_signout
-//                        ?.background
-//                        ?.setColorFilter(ContextCompat.getColor(activity!!, R.color.colorLightGray), PorterDuff.Mode.MULTIPLY)
-//                } else {
-//
-//                    if (uid != currentUserUid) {
-//
-//                        fragmentView.account_btn_follow_signout?.text = getString(R.string.follow)
-//                        fragmentView.account_btn_follow_signout?.background?.colorFilter = null
-//                    }
-//                }
+                    fragmentView.account_btn_follow_signout?.text = getString(R.string.follow_cancel)
+                    fragmentView.account_btn_follow_signout
+                        ?.background
+                        ?.setColorFilter(ContextCompat.getColor(activity!!, R.color.colorLightGray), PorterDuff.Mode.MULTIPLY)
+                } else {
+
+                    if (uid != currentUserUid) {
+
+                        fragmentView.account_btn_follow_signout?.text = getString(R.string.follow)
+                        fragmentView.account_btn_follow_signout?.background?.colorFilter = null
+                    }
+                }
             }
     }
 
     private fun getFollowing(){
-        fireStore.collection("users").document(uid)
+        followingListenerRegistration = fireStore.collection("users").document(uid)
             .addSnapshotListener { documentSnapshot, _ ->
                 if(documentSnapshot == null)return@addSnapshotListener
                 val followDTO = documentSnapshot.toObject(FollowDTO::class.java)
@@ -192,7 +213,8 @@ class UserFragment : Fragment(){
         var contentDTOs : ArrayList<ContentDTO> = ArrayList()
 
         init {
-            fireStore.collection("images").whereEqualTo("uid",uid).orderBy("timestamp",Query.Direction.DESCENDING)
+            recyclerListenerRegistration = fireStore.collection("images").whereEqualTo("uid",uid)
+                .orderBy("timestamp",Query.Direction.DESCENDING)
                 .addSnapshotListener { querySnapshot, _ ->
                     if(querySnapshot == null)return@addSnapshotListener
                     contentDTOs.clear()

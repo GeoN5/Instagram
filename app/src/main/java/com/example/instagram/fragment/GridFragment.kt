@@ -13,20 +13,33 @@ import com.example.instagram.R
 import com.example.instagram.model.ContentDTO
 import com.example.instagram.util.loadImage
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
-import kotlinx.android.synthetic.main.fragment_grid.view.*
 
 class GridFragment : Fragment(){
 
     private lateinit var fragmentView :View
     private lateinit var fireStore :FirebaseFirestore
+    private lateinit var recyclerview :RecyclerView
+    private lateinit var recyclerviewListenerRegistration :ListenerRegistration
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         fragmentView =  inflater.inflate(R.layout.fragment_grid,container,false)
         fireStore = FirebaseFirestore.getInstance()
-        fragmentView.gridfragment_recyclerview.adapter = GridRecyclerViewAdapter()
-        fragmentView.gridfragment_recyclerview.layoutManager = GridLayoutManager(context,3)
+        recyclerview = fragmentView.findViewById(R.id.gridfragment_recyclerview)
+
         return fragmentView
+    }
+
+    override fun onResume() {
+        super.onResume()
+        recyclerview.adapter = GridRecyclerViewAdapter()
+        recyclerview.layoutManager = GridLayoutManager(context,3)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        recyclerviewListenerRegistration.remove()
     }
 
     inner class GridRecyclerViewAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>(){
@@ -34,7 +47,7 @@ class GridFragment : Fragment(){
         var contentDTOs : ArrayList<ContentDTO> = ArrayList()
 
         init {
-            fireStore.collection("images").orderBy("timestamp",Query.Direction.DESCENDING)//내림차순 정렬
+            recyclerviewListenerRegistration = fireStore.collection("images").orderBy("timestamp",Query.Direction.DESCENDING)
                 .addSnapshotListener { querySnapshot, _ ->
                     if(querySnapshot == null)return@addSnapshotListener
                     contentDTOs.clear()

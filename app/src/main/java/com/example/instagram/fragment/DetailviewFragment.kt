@@ -8,6 +8,8 @@ import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
 import com.example.instagram.R
 import com.example.instagram.activity.CommentActivity
 import com.example.instagram.model.AlarmDTO
@@ -16,10 +18,7 @@ import com.example.instagram.model.FollowDTO
 import com.example.instagram.util.loadImage
 import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.DocumentSnapshot
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
-import com.google.firebase.firestore.Transaction
+import com.google.firebase.firestore.*
 import kotlinx.android.synthetic.main.fragment_detail.view.*
 import kotlinx.android.synthetic.main.item_detail.view.*
 
@@ -27,18 +26,31 @@ class DetailviewFragment : Fragment(){
 
     private lateinit var fireStore : FirebaseFirestore
     private lateinit var auth : FirebaseAuth
+    private lateinit var recyclerview :RecyclerView
+    private lateinit var recyclerviewListenerRegistration : ListenerRegistration
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val fragmentView =  inflater.inflate(R.layout.fragment_detail,container,false)
         firebaseInit()
-        fragmentView.detailviewfragment_recyclerview.adapter = DetailRecyclerViewAdapter()
-        fragmentView.detailviewfragment_recyclerview.layoutManager = LinearLayoutManager(context)
+        recyclerview = fragmentView.findViewById(R.id.detailviewfragment_recyclerview)
+
         return fragmentView
     }
 
     private fun firebaseInit(){
         fireStore = FirebaseFirestore.getInstance()
         auth = FirebaseAuth.getInstance()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        recyclerview.adapter = DetailRecyclerViewAdapter()
+        recyclerview.layoutManager = LinearLayoutManager(context)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        recyclerviewListenerRegistration.remove()
     }
 
     inner class DetailRecyclerViewAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>(){
@@ -59,7 +71,7 @@ class DetailviewFragment : Fragment(){
         }
 
         private fun getContents(followings:MutableMap<String,Boolean>){
-            fireStore.collection("images").orderBy("timestamp", Query.Direction.DESCENDING)
+            recyclerviewListenerRegistration = fireStore.collection("images").orderBy("timestamp", Query.Direction.DESCENDING)
                 .addSnapshotListener { querySnapshot, _ ->
                     if(querySnapshot == null)return@addSnapshotListener
                     contentDTOs.clear()
@@ -87,6 +99,13 @@ class DetailviewFragment : Fragment(){
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
             val viewHolder = holder.itemView
 
+            fireStore.collection("profileImages").document(contentDTOs[position].uid!!).get()
+                .addOnCompleteListener { task ->
+                    if(task.isSuccessful){
+                        val url = task.result!!["image"]
+                        Glide.with(holder.itemView.context).load(url).apply(RequestOptions().circleCrop()).into(viewHolder.detailviewitem_profile_image)
+                    }
+                }
             viewHolder.detailviewitem_profile_textview.text = contentDTOs[position].userId //유저 아이디
             viewHolder.detailviewitem_imageview_content.loadImage(contentDTOs[position].imageUri!!,context!!) //이미지
             viewHolder.detailviewitem_explain_textview.text = contentDTOs[position].explain //설명 텍스트
@@ -112,7 +131,6 @@ class DetailviewFragment : Fragment(){
                 startActivity(Intent(context,CommentActivity::class.java).
                     putExtra("contentUid",contentUidList[position]).putExtra("destinationUid",contentDTOs[position].uid))
             }
-            viewHolder.detailviewitem_profile_image.setImageResource(R.mipmap.ic_launcher)
 
         }
 
