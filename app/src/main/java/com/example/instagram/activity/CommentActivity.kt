@@ -13,6 +13,7 @@ import com.example.instagram.model.ContentDTO
 import com.example.instagram.util.DateUtil
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.android.synthetic.main.activity_comment.*
@@ -26,17 +27,16 @@ class CommentActivity : AppCompatActivity() {
     private lateinit var storage : FirebaseStorage
     private lateinit var auth : FirebaseAuth
     private lateinit var fireStore : FirebaseFirestore
+    private lateinit var recyclerviewListenerRegistration :ListenerRegistration
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_comment)
 
         firebaseInit()
+
         contentUid = intent.getStringExtra("contentUid")
         destinationUid = intent.getStringExtra("destinationUid")
-
-        comment_recyclerview.adapter = CommentRecyclerViewAdapter()
-        comment_recyclerview.layoutManager = LinearLayoutManager(this)
 
         comment_btn_send.setOnClickListener {
             val comment = ContentDTO.Comment()
@@ -50,6 +50,18 @@ class CommentActivity : AppCompatActivity() {
             commentAlarm(destinationUid,comment_edit_message.text.toString())
             comment_edit_message.text = null
         }
+
+    }
+
+    override fun onResume() {
+        super.onResume()
+        comment_recyclerview.adapter = CommentRecyclerViewAdapter()
+        comment_recyclerview.layoutManager = LinearLayoutManager(this)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        recyclerviewListenerRegistration.remove()
 
     }
 
@@ -76,7 +88,7 @@ class CommentActivity : AppCompatActivity() {
         private val comments : ArrayList<ContentDTO.Comment> = ArrayList()
 
         init {
-            fireStore.collection("images").document(contentUid).collection("comments")
+            recyclerviewListenerRegistration = fireStore.collection("images").document(contentUid).collection("comments")
                 .orderBy("timestamp",Query.Direction.DESCENDING)
                 .addSnapshotListener { querySnapshot, _ ->
                     if(querySnapshot == null)return@addSnapshotListener
