@@ -53,7 +53,7 @@ class DetailviewFragment : Fragment(){
         recyclerviewListenerRegistration.remove()
     }
 
-    inner class DetailRecyclerViewAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>(){
+    inner class DetailRecyclerViewAdapter : RecyclerView.Adapter<DetailViewHolder>(){
 
         var contentDTOs : ArrayList<ContentDTO> = ArrayList()
         var contentUidList : ArrayList<String> = ArrayList() //document
@@ -87,7 +87,7 @@ class DetailviewFragment : Fragment(){
                 }
         }
 
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DetailViewHolder {
             val view = LayoutInflater.from(context).inflate(R.layout.item_detail,parent,false)
             return DetailViewHolder(view)
         }
@@ -96,29 +96,28 @@ class DetailviewFragment : Fragment(){
             return contentDTOs.size
         }
 
-        override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-            val viewHolder = holder.itemView
+        override fun onBindViewHolder(holder: DetailViewHolder, position: Int) {
 
             fireStore.collection("profileImages").document(contentDTOs[position].uid!!).get()
                 .addOnCompleteListener { task ->
                     if(task.isSuccessful){
                         val url = task.result!!["image"]
-                        Glide.with(holder.itemView.context).load(url).apply(RequestOptions().circleCrop()).into(viewHolder.detailviewitem_profile_image)
+                        Glide.with(holder.itemView.context).load(url).apply(RequestOptions().circleCrop()).into(holder.profileImage)
                     }
                 }
-            viewHolder.detailviewitem_profile_textview.text = contentDTOs[position].userId //유저 아이디
-            viewHolder.detailviewitem_imageview_content.loadImage(contentDTOs[position].imageUri!!,context!!) //이미지
-            viewHolder.detailviewitem_explain_textview.text = contentDTOs[position].explain //설명 텍스트
-            viewHolder.detailviewitem_favoritecounter_textview.text = "좋아요 ${contentDTOs[position].favoriteCount}개" //좋아요 카운터
-            viewHolder.detailviewitem_favorite_imageview.setOnClickListener {
+            holder.userId.text = contentDTOs[position].userId //유저 아이디
+            holder.imageContent.loadImage(contentDTOs[position].imageUri!!,context!!) //이미지
+            holder.explainText.text = contentDTOs[position].explain //설명 텍스트
+            holder.favoriteCount.text = "좋아요 ${contentDTOs[position].favoriteCount}개" //좋아요 카운터
+            holder.favoriteImage.setOnClickListener {
                 favoriteEvent(position)
             }
             if(contentDTOs[position].favorites.containsKey(uid)){ //좋아요 클릭되있는 경우
-                viewHolder.detailviewitem_favorite_imageview.setImageResource(R.drawable.ic_favorite)
+                holder.favoriteImage.setImageResource(R.drawable.ic_favorite)
             }else{ //클릭되있지 않은 경우
-                viewHolder.detailviewitem_favorite_imageview.setImageResource(R.drawable.ic_favorite_border)
+                holder.favoriteImage.setImageResource(R.drawable.ic_favorite_border)
             }
-            viewHolder.detailviewitem_profile_image.setOnClickListener {//프래그먼트간의 전환
+            holder.profileImage.setOnClickListener {//프래그먼트간의 전환
                 val fragment = UserFragment()
                 val bundle = Bundle()
                 bundle.putString("destinationUid",contentDTOs[position].uid)
@@ -126,7 +125,7 @@ class DetailviewFragment : Fragment(){
                 fragment.arguments = bundle
                 activity!!.supportFragmentManager.beginTransaction().replace(R.id.main_content,fragment).commit()
             }
-            viewHolder.detailviewitem_comment_imageview.setOnClickListener {
+            holder.commentImage.setOnClickListener {
                 //게시물 id,게시물 작성자 uid 넘김
                 startActivity(Intent(context,CommentActivity::class.java).
                     putExtra("contentUid",contentUidList[position]).putExtra("destinationUid",contentDTOs[position].uid))
@@ -166,7 +165,15 @@ class DetailviewFragment : Fragment(){
 
 }
 
-class DetailViewHolder(view: View) : RecyclerView.ViewHolder(view)
+class DetailViewHolder(view: View) : RecyclerView.ViewHolder(view){
+    var profileImage = view.detailviewitem_profile_image!!
+    var userId = view.detailviewitem_profile_textview!!
+    var imageContent = view.detailviewitem_imageview_content!!
+    var explainText = view.detailviewitem_explain_textview!!
+    var favoriteCount = view.detailviewitem_favoritecounter_textview!!
+    var favoriteImage = view.detailviewitem_favorite_imageview!!
+    var commentImage = view.detailviewitem_comment_imageview!!
+}
 
 
 

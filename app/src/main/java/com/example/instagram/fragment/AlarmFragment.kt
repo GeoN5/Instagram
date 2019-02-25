@@ -48,7 +48,7 @@ class AlarmFragment : Fragment(){
         recyclerviewListenerRegistration.remove()
     }
 
-    inner class AlarmRecyclerViewAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>(){
+    inner class AlarmRecyclerViewAdapter : RecyclerView.Adapter<AlarmViewHolder>(){
 
         private val alarmDTOlist :ArrayList<AlarmDTO> = ArrayList()
 
@@ -65,7 +65,7 @@ class AlarmFragment : Fragment(){
                 }
         }
 
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AlarmViewHolder {
             val view = LayoutInflater.from(context).inflate(R.layout.item_alarm,parent,false)
             return AlarmViewHolder(view)
         }
@@ -74,23 +74,21 @@ class AlarmFragment : Fragment(){
             return alarmDTOlist.size
         }
 
-        override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-            val commentTextView = holder.itemView.alarmviewItem_textview_message
-            val profileImage = holder.itemView.alarmviewitem_imageview_profile
+        override fun onBindViewHolder(holder: AlarmViewHolder, position: Int) {
 
             when(alarmDTOlist[position].kind){
                 0 -> {
                     val str0 = "${alarmDTOlist[position].userId}${getString(R.string.alarm_favorite)}"
-                    commentTextView.text = str0
+                    holder.commentTextView.text = str0
                 }
                 1 -> {
                     val str1 = "${alarmDTOlist[position].userId}${getString(R.string.alarm_who)}" +
                             "\"${alarmDTOlist[position].message}\"${getString(R.string.alarm_comment)}"
-                    commentTextView.text = str1
+                    holder.commentTextView.text = str1
                 }
                 2 -> {
                     val str2 = "${alarmDTOlist[position].userId}${getString(R.string.alarm_follow)}"
-                    commentTextView.text = str2
+                    holder.commentTextView.text = str2
                 }
             }
 
@@ -98,7 +96,7 @@ class AlarmFragment : Fragment(){
                 .addOnCompleteListener { task ->
                     if (task.isSuccessful) {
                         val url = task.result!!["image"]
-                        Glide.with(context!!).load(url).apply(RequestOptions().circleCrop()).into(profileImage)
+                        Glide.with(context!!).load(url).apply(RequestOptions().circleCrop()).into(holder.alarmImage)
                     }
                 }
         }
@@ -107,4 +105,7 @@ class AlarmFragment : Fragment(){
 
 }
 
-class AlarmViewHolder(view: View) : RecyclerView.ViewHolder(view)
+class AlarmViewHolder(view: View) : RecyclerView.ViewHolder(view){
+    var alarmImage = view.alarmviewitem_imageview_profile!!
+    var commentTextView = view.alarmviewItem_textview_message!!
+}

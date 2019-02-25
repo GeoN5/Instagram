@@ -208,7 +208,7 @@ class UserFragment : Fragment(){
         fireStore.collection("alarms").document().set(alarmDTO)
     }
 
-    inner class UserRecyclerViewAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>(){
+    inner class UserRecyclerViewAdapter : RecyclerView.Adapter<UserViewHolder>(){
 
         var contentDTOs : ArrayList<ContentDTO> = ArrayList()
 
@@ -226,7 +226,7 @@ class UserFragment : Fragment(){
                 }
         }
 
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UserViewHolder {
             val width = resources.displayMetrics.widthPixels / 3
             val imageView = ImageView(context)
             imageView.layoutParams = LinearLayoutCompat.LayoutParams(width,width)
@@ -237,8 +237,8 @@ class UserFragment : Fragment(){
             return contentDTOs.size
         }
 
-        override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-            val imageView = (holder as UserViewHolder).imageView
+        override fun onBindViewHolder(holder: UserViewHolder, position: Int) {
+            val imageView = holder.imageView
             imageView.loadImage(contentDTOs[position].imageUri!!,context!!)
         }
 

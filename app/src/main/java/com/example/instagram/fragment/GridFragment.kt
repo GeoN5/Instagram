@@ -42,7 +42,7 @@ class GridFragment : Fragment(){
         recyclerviewListenerRegistration.remove()
     }
 
-    inner class GridRecyclerViewAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>(){
+    inner class GridRecyclerViewAdapter : RecyclerView.Adapter<GridViewHolder>(){
 
         var contentDTOs : ArrayList<ContentDTO> = ArrayList()
 
@@ -58,7 +58,7 @@ class GridFragment : Fragment(){
                 }
         }
 
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GridViewHolder {
             val width = resources.displayMetrics.widthPixels / 3 //화면의 가로 픽셀값
             val imageView = ImageView(context)
             imageView.layoutParams = LinearLayoutCompat.LayoutParams(width,width)
@@ -70,8 +70,8 @@ class GridFragment : Fragment(){
             return contentDTOs.size
         }
 
-        override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-            val imageView = (holder as GridViewHolder).imageView
+        override fun onBindViewHolder(holder: GridViewHolder, position: Int) {
+            val imageView = holder.imageView
             imageView.loadImage(contentDTOs[position].imageUri!!,context!!)
 
             imageView.setOnClickListener {
