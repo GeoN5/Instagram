@@ -85,7 +85,7 @@ class CommentActivity : AppCompatActivity() {
         fireStore.collection("alarms").document().set(alarmDTO)
     }
 
-    inner class CommentRecyclerViewAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>(){
+    inner class CommentRecyclerViewAdapter : RecyclerView.Adapter<CommentViewHolder>(){
 
         private val comments : ArrayList<ContentDTO.Comment> = ArrayList()
 
@@ -102,7 +102,7 @@ class CommentActivity : AppCompatActivity() {
                 }
         }
 
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CommentViewHolder {
             val view = LayoutInflater.from(this@CommentActivity).inflate(R.layout.item_comment,parent,false)
             return CommentViewHolder(view)
         }
@@ -111,17 +111,16 @@ class CommentActivity : AppCompatActivity() {
             return comments.size
         }
 
-        override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-            val view = holder.itemView
-            view.commentviewItem_textview_date.text = DateUtil.formatDate(Date(comments[position].timestamp!!))
-            view.commentviewItem_textview_profile.text = comments[position].userId
-            view.commentviewItem_textview_comment.text = comments[position].comment
+        override fun onBindViewHolder(holder: CommentViewHolder, position: Int) {
+            holder.dataText.text = DateUtil.formatDate(Date(comments[position].timestamp!!))
+            holder.profileText.text = comments[position].userId
+            holder.commentText.text = comments[position].comment
 
             fireStore.collection("profileImages").document(comments[position].uid!!).get()
                 .addOnCompleteListener { task ->
                 if(task.isSuccessful){
                     val url = task.result!!["image"]
-                    Glide.with(this@CommentActivity).load(url).apply(RequestOptions().circleCrop()).into(view.commentviewItem_imageview_profile)
+                    Glide.with(this@CommentActivity).load(url).apply(RequestOptions().circleCrop()).into(holder.profileImage)
                 }
             }
         }
@@ -130,4 +129,9 @@ class CommentActivity : AppCompatActivity() {
 
 }
 
-class CommentViewHolder(view: View) : RecyclerView.ViewHolder(view)
+class CommentViewHolder(view: View) : RecyclerView.ViewHolder(view){
+    var dataText = view.commentviewItem_textview_date!!
+    var profileText = view.commentviewItem_textview_profile!!
+    var commentText = view.commentviewItem_textview_comment!!
+    var profileImage = view.commentviewItem_imageview_profile!!
+}
